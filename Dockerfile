@@ -45,18 +45,29 @@ RUN mkdir -p /root/.ssh && \
     chmod 700 /root/.ssh && \
     ssh-keyscan -H github.com >> /root/.ssh/known_hosts
 
+# Copy SSH private key (you'll need to provide this when building)
+# Note: You'll need to have your SSH private key available during build
+#COPY id_rsa /root/.ssh/id_rsa
+#RUN chmod 600 /root/.ssh/id_rsa
+
 # Clone turpial-dev (main/master branch)
-RUN git clone https://github.com/slaclab/turpial-dev.git
+#RUN git clone https://github.com/slaclab/turpial-dev.git
+#RUN git clone --recursive git@github.com:slaclab/turpial-dev.git
 
 # Clone specific branch of rogue repository
 # Replace 'development-branch-name' with the actual branch name
 #RUN git clone -b pre-release https://github.com/slaclab/rogue.git
 
 # Alternative: Clone specific branch with single-branch option (saves space)
-RUN git clone -b pre-release --single-branch https://github.com/slaclab/rogue.git
+#RUN git clone -b pre-release --single-branch https://github.com/slaclab/rogue.git
+#RUN git clone -b pre-release --single-branch git@github.com:slaclab/rogue.git
 
 # Set working directory to the application root
 WORKDIR /app
+
+# Copy over the controls software
+COPY turpial-dev turpial-dev
+COPY rogue rogue
 
 # Install Python dependencies if requirements files exist
 RUN if [ -f turpial-dev/pip_requirements.txt ]; then \
