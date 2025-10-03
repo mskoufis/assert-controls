@@ -1,9 +1,9 @@
-## Option 1. USE OFFICIAL ROGUE CONTAINER
+## Option 1. USE AN OFFICIAL ROGUE CONTAINER
 #FROM ghcr.io/slaclab/rogue:v6.6.2
 
-## Option 2. USE CONDA ENV FOR TAGGED ROGUE RELEASE
+## Option 2. USE A CONDA ENV WITH A TAGGED ROGUE RELEASE
 
-## Option 3. USE ROGUE DEV BRANCH (SELECTED FOR NOW)
+## Option 3. USE A ROGUE DEV BRANCH (THIS WORKS FOR NOW)
 
 # Use Ubuntu 22.04 as base image
 FROM ubuntu:22.04
@@ -27,7 +27,6 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     make \
     cmake \
-    libboost-all-dev \
     libbz2-dev \
     libzmq3-dev \
     python3-pyqt5 \
@@ -38,7 +37,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a working directory
-WORKDIR /app
+WORKDIR /assert-app
 
 # Add GitHub to known hosts
 RUN mkdir -p /root/.ssh && \
@@ -63,11 +62,12 @@ RUN mkdir -p /root/.ssh && \
 #RUN git clone -b pre-release --single-branch git@github.com:slaclab/rogue.git
 
 # Set working directory to the application root
-WORKDIR /app
+WORKDIR /assert-app
 
 # Copy over the controls software
-COPY turpial-dev turpial-dev
-COPY rogue rogue
+COPY rogue/ rogue/
+COPY turpial-dev/ turpial-dev/
+COPY .git/modules/ .git/modules/
 
 # Install Python dependencies if requirements files exist
 RUN if [ -f turpial-dev/pip_requirements.txt ]; then \
@@ -79,30 +79,27 @@ RUN if [ -f rogue/pip_requirements.txt ]; then \
     fi
 
 # Install miniforge conda
-RUN wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && /bin/bash Miniforge3-Linux-x86_64.sh -b -p /opt/Miniforge3 && source /opt/Miniforge3/etc/profile.d/conda.sh
+RUN wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+RUN /bin/bash Miniforge3-Linux-x86_64.sh -b -p /miniforge3
 
 # Configure miniforge conda
-RUN conda config --set channel_priority strict &&\
-    conda install -n base conda-libmamba-solver &&\
-    conda config --set solver libmamba
-
 # Create rogue conda environment
-RUN cd rogue &&\
-    conda activate &&\
-    conda env create -n assert_rogue -f conda.yml
-
 # Activate rogue conda environment
-RUN conda activate assert_rogue
-
 # Build rogue inside conda environment 
-RUN mkdir build &&\
+RUN . /miniforge3/etc/profile.d/conda.sh &&\
+    conda config --set channel_priority strict  &&\
+    conda install -n base conda-libmamba-solver &&\
+    conda config --set solver libmamba &&\
+    conda activate &&\
+    conda update -n base -c conda-forge conda &&\
+    cd /assert-app/rogue &&\
+    conda env create -n assert_rogue -f conda.yml &&\
+    conda activate assert_rogue &&\
+    mkdir build &&\
     cd build &&\
     cmake .. &&\
     make &&\
     make install
-
-# Set working directory to the application root
-WORKDIR /app
 
 # Expose common ports (adjust as needed)
 EXPOSE 8080 8000
