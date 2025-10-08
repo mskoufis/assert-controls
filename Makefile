@@ -7,4 +7,7 @@ clean:
 build:
 	docker build -t assert_dev_image:$(shell git branch --show-current) .
 
-.PHONY: clean build all
+run:
+	docker run -it assert_dev_image:$(shell git branch --show-current)
+
+.PHONY: clean build all run

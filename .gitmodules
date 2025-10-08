@@ -1,6 +1,3 @@
-[submodule "turpial-dev"]
-	path = turpial-dev
-	url = git@github.com:slaclab/turpial-dev.git
 [submodule "rogue"]
 	path = rogue
 	url = git@github.com:slaclab/rogue.git

@@ -104,5 +104,7 @@ RUN . /miniforge3/etc/profile.d/conda.sh &&\
 # Expose common ports (adjust as needed)
 EXPOSE 8080 8000
 
+WORKDIR /
+
 # Set the default command
 CMD ["/bin/bash"]
