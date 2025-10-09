@@ -1,8 +1,8 @@
 all: build  
 
 clean:
-	docker image prune -a -f
 	docker rmi -f assert_dev_image:$(shell git branch --show-current)
+	docker image prune -a -f
 
 cleanall:
 	docker system prune
