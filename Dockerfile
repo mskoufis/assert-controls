@@ -5,7 +5,7 @@
 
 # Option 2. USE A CONDA ENV WITH A TAGGED ROGUE RELEASE
 
-# Option 3. USE A ROGUE DEV BRANCH (THIS WORKS FOR NOW)
+# Option 3. USE A ROGUE DEV BRANCH (THIS IS BEST FOR NOW)
 
 # Use Ubuntu 22.04 as base image
 FROM ubuntu:22.04
@@ -13,6 +13,15 @@ FROM ubuntu:22.04
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
+
+USER root
+
+ARG uid
+ARG gid
+ARG user
+
+RUN groupadd -g ${gid} -o ${user}
+RUN useradd -m -N --gid ${gid} --shell /bin/bash --uid ${uid} ${user}
 
 # Update package list and install essential packages
 RUN apt-get update && apt-get install -y \
@@ -37,43 +46,28 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     libxcb-xinerama0 \
+    libxcb-util1 \
+    libxkbcommon-x11-0 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-render-util0 \
+    libxcb-icccm4 \
+    x11-apps \
+    && apt-get clean && apt-get -y autoremove \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a working directory
-WORKDIR /assert-app
-
-# Add GitHub to known hosts
-RUN mkdir -p /root/.ssh && \
-    chmod 700 /root/.ssh && \
-    ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-
-# Copy SSH private key (you'll need to provide this when building)
-# Note: You'll need to have your SSH private key available during build
-#COPY id_rsa /root/.ssh/id_rsa
-#RUN chmod 600 /root/.ssh/id_rsa
-
-# Clone turpial-dev (main/master branch)
-#RUN git clone https://github.com/slaclab/turpial-dev.git
-#RUN git clone --recursive git@github.com:slaclab/turpial-dev.git
-
-# Clone specific branch of rogue repository
-# Replace 'development-branch-name' with the actual branch name
-#RUN git clone -b pre-release https://github.com/slaclab/rogue.git
-
-# Alternative: Clone specific branch with single-branch option (saves space)
-#RUN git clone -b pre-release --single-branch https://github.com/slaclab/rogue.git
-#RUN git clone -b pre-release --single-branch git@github.com:slaclab/rogue.git
-
-# Set working directory to the application root
-WORKDIR /assert-app
+WORKDIR /home/${user}/assert-app
 
 ENV CONDA_ROGUE_ENV=assert_rogue
-ENV QT_DEBUG_PLUGINS=1
 
 # Copy over the controls software
 COPY rogue/ rogue/
 COPY turpial-dev/ turpial-dev/
 COPY .git/modules/ .git/modules/
+
+COPY start.sh start.sh
+RUN chmod +x /home/${user}/assert-app/start.sh
 
 # Install Python dependencies if requirements files exist
 RUN if [ -f turpial-dev/pip_requirements.txt ]; then \
@@ -98,25 +92,30 @@ RUN . /miniforge3/etc/profile.d/conda.sh &&\
     conda config --set solver libmamba &&\
     conda activate &&\
     conda update -n base -c conda-forge conda &&\
-    cd /assert-app/rogue &&\
-    conda env create -n $CONDA_ROGUE_ENV -f conda.yml &&\
-    conda activate $CONDA_ROGUE_ENV &&\
+    cd /home/${user}/assert-app/rogue &&\
+    conda env create -n ${CONDA_ROGUE_ENV} -f conda.yml &&\
+    conda activate ${CONDA_ROGUE_ENV} &&\
     mkdir build &&\
     cd build &&\
     cmake .. &&\
     make &&\
     make install
 
-ENV PATH=/miniforge3/envs/$CONDA_ROGUE_ENV/bin:$PATH
+USER ${user}
+WORKDIR /home/${user}
 
-RUN echo >> ~/.bashrc
+RUN echo >> /home/${user}/.bashrc
 RUN echo "source /miniforge3/etc/profile.d/conda.sh" >> ~/.bashrc
-RUN echo "conda activate $CONDA_ROGUE_ENV" >> ~/.bashrc
+RUN echo "conda activate ${CONDA_ROGUE_ENV}" >> ~/.bashrc
+
+ENV PATH=/miniforge3/envs/${CONDA_ROGUE_ENV}/bin:$PATH
 
 # Expose common ports (adjust as needed)
 EXPOSE 8080 8000
 
-WORKDIR /
+# Set new work directory
+WORKDIR /home/${user}/assert-app/
 
 # Set the default command
+#CMD ["/home/${user}/assert-app/start.sh"]
 CMD ["/bin/bash"]
