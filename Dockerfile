@@ -36,6 +36,7 @@ RUN apt-get update && apt-get install -y \
     libreadline6-dev \
     pkg-config \
     libssl-dev \
+    libxcb-xinerama0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a working directory
@@ -67,6 +68,7 @@ RUN mkdir -p /root/.ssh && \
 WORKDIR /assert-app
 
 ENV CONDA_ROGUE_ENV=assert_rogue
+ENV QT_DEBUG_PLUGINS=1
 
 # Copy over the controls software
 COPY rogue/ rogue/
