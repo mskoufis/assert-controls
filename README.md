@@ -13,7 +13,7 @@ $ make build
 
 ## How To Run The App
 ```bash
-$ make
+$ make run
 ```
 
 ## How To Remove The Image

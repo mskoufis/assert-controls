@@ -1,9 +1,11 @@
-## Option 1. USE AN OFFICIAL ROGUE CONTAINER
+# syntax=docker/dockerfile:1
+
+# Option 1. USE AN OFFICIAL ROGUE CONTAINER
 #FROM ghcr.io/slaclab/rogue:v6.6.2
 
-## Option 2. USE A CONDA ENV WITH A TAGGED ROGUE RELEASE
+# Option 2. USE A CONDA ENV WITH A TAGGED ROGUE RELEASE
 
-## Option 3. USE A ROGUE DEV BRANCH (THIS WORKS FOR NOW)
+# Option 3. USE A ROGUE DEV BRANCH (THIS WORKS FOR NOW)
 
 # Use Ubuntu 22.04 as base image
 FROM ubuntu:22.04
@@ -64,6 +66,8 @@ RUN mkdir -p /root/.ssh && \
 # Set working directory to the application root
 WORKDIR /assert-app
 
+ENV CONDA_ROGUE_ENV=assert_rogue
+
 # Copy over the controls software
 COPY rogue/ rogue/
 COPY turpial-dev/ turpial-dev/
@@ -93,13 +97,19 @@ RUN . /miniforge3/etc/profile.d/conda.sh &&\
     conda activate &&\
     conda update -n base -c conda-forge conda &&\
     cd /assert-app/rogue &&\
-    conda env create -n assert_rogue -f conda.yml &&\
-    conda activate assert_rogue &&\
+    conda env create -n $CONDA_ROGUE_ENV -f conda.yml &&\
+    conda activate $CONDA_ROGUE_ENV &&\
     mkdir build &&\
     cd build &&\
     cmake .. &&\
     make &&\
     make install
+
+ENV PATH=/miniforge3/envs/$CONDA_ROGUE_ENV/bin:$PATH
+
+RUN echo >> ~/.bashrc
+RUN echo "source /miniforge3/etc/profile.d/conda.sh" >> ~/.bashrc
+RUN echo "conda activate $CONDA_ROGUE_ENV" >> ~/.bashrc
 
 # Expose common ports (adjust as needed)
 EXPOSE 8080 8000
