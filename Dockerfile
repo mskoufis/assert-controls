@@ -25,6 +25,7 @@ RUN useradd -m -N --gid ${gid} --shell /bin/bash --uid ${uid} ${user}
 
 # Update package list and install essential packages
 RUN apt-get update && apt-get install -y \
+    vim \
     gcc \
     g++ \
     git \
@@ -55,6 +56,11 @@ RUN apt-get update && apt-get install -y \
     x11-apps \
     && apt-get clean && apt-get -y autoremove \
     && rm -rf /var/lib/apt/lists/*
+
+# Create the following directory 
+RUN mkdir -p /run/user/${uid}
+RUN chown -R ${uid}:${gid} /run/user/${uid}
+RUN chmod -R 700 /run/user/${uid}
 
 # Create a working directory
 WORKDIR /home/${user}/assert-app
@@ -109,9 +115,10 @@ RUN echo "source /miniforge3/etc/profile.d/conda.sh" >> ~/.bashrc
 RUN echo "conda activate ${CONDA_ROGUE_ENV}" >> ~/.bashrc
 
 ENV PATH=/miniforge3/envs/${CONDA_ROGUE_ENV}/bin:$PATH
+ENV XDG_RUNTIME_DIR=/run/user/${uid}
 
 # Expose common ports (adjust as needed)
-EXPOSE 9099 9101
+EXPOSE 9090 9099-9101
 
 # Set new work directory
 WORKDIR /home/${user}/assert-app/
