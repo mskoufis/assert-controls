@@ -111,7 +111,7 @@ RUN echo "conda activate ${CONDA_ROGUE_ENV}" >> ~/.bashrc
 ENV PATH=/miniforge3/envs/${CONDA_ROGUE_ENV}/bin:$PATH
 
 # Expose common ports (adjust as needed)
-EXPOSE 8080 8000
+EXPOSE 9099 9101
 
 # Set new work directory
 WORKDIR /home/${user}/assert-app/
