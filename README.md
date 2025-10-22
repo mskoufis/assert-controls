@@ -20,3 +20,7 @@ $ make run
 ```bash
 $ make clean
 ```
+## How To Remove Unused Docker Resources
+```bash
+$ make cleanall
+```

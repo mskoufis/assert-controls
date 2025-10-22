@@ -10,6 +10,10 @@
 # Use Ubuntu 22.04 as base image
 FROM ubuntu:22.04
 
+# Set the QT_DEBUG_PLUGINS environment variable
+ENV QT_DEBUG_PLUGINS=0
+ENV QT_LOGGING_TO_CONSOLE=1
+
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -54,8 +58,15 @@ RUN apt-get update && apt-get install -y \
     libxcb-render-util0 \
     libxcb-icccm4 \
     x11-apps \
+    locales \
+    keyboard-configuration \
     && apt-get clean && apt-get -y autoremove \
     && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # Create the following directory 
 RUN mkdir -p /run/user/${uid}
